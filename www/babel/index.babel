@@ -1,0 +1,348 @@
+console.clear();
+
+/************************************
+* IMPORTS
+************************************/
+
+const { Component } = React;
+const { v4 } = uuid;
+const { createStore, combineReducers } = Redux;
+const { connect, Provider } = ReactRedux;
+const ReactCSSTransitionGroup = React.addons.CSSTransitionGroup;
+
+/************************************
+* ACTION CREATORS
+************************************/
+
+// These are actions that will be passed to store.dispatch()
+const addTodo = (text) => ({
+  type: 'ADD_TODO',
+  id: v4(),
+  text
+});
+
+const toggleTodo = (id) => ({
+  type: 'TOGGLE_TODO',
+  id
+});
+
+const removeTodo = (id) => ({
+  type: 'REMOVE_TODO',
+  id
+});
+
+const setVisibilityFilter = (filter) => ({
+  type: 'SET_VISIBILITY_FILTER',
+  filter
+});
+
+/************************************
+* REDUCERS 
+************************************/
+
+/* todos ***************************/
+const todos = (state = [], action) => {
+  switch (action.type) {
+    case 'ADD_TODO':
+      // Return the current array and use todo reducer to add a new todo object to the end. 'undefined' is passed because a new todo doesn't require state, and 'ADD_TODO' is passed as the action.
+      return [
+        ...state,
+        // 
+        todo(undefined, action)
+      ];
+    case 'TOGGLE_TODO':
+      // Take each item in todos and pass it through the todo reducer with 'TOGGLE_TODO' as the action.
+      return state.map((t) => todo(t, action));
+    case 'REMOVE_TODO':
+      let index;
+      state.map((t, i) => {
+        if (t.id === action.id) {
+          index = i;
+        }
+      });
+      return [
+        ...state.slice(0, index),
+        ...state.slice(index + 1)
+      ]
+    default:
+      return state;
+                     }
+};
+
+const todo = (state, action) => {
+  switch (action.type) {
+    case 'ADD_TODO':
+      // Return a new todo with these values. It then gets added to the array used in 'ADD_TODO' in the todos reducer.
+      return {
+        id: action.id,
+        text: action.text,
+        completed: false
+      };
+    case 'TOGGLE_TODO':
+      // Return the original state if the IDs DON'T match.
+      if (state.id !== action.id) {
+        return state;
+      }
+      return {
+        // If the IDs DO match, return the current state object, but flip completed.
+        ...state,
+        completed: !state.completed
+      }
+    default:
+      return state;
+                     }
+}
+/* visibilityFilter ****************/
+const visibilityFilter = (state = 'SHOW_ALL', action) => {
+  switch (action.type) {
+    case 'SET_VISIBILITY_FILTER':
+      return action.filter;
+    default:
+      return state;
+                     }
+}
+
+const todoApp = combineReducers({
+  todos,
+  visibilityFilter
+});
+
+/************************************
+* PRESENTATIONAL COMPONENTS
+************************************/
+
+/* <Todo /> ************************/
+const Todo = ({
+  onClick,
+  completed,
+  text,
+  id
+}) => (
+  <li
+    onClick={onClick}
+    className={"todo" + (completed ? " todo-completed" : "")}
+    >
+    <i className={"fa " + (completed ? 'fa-dot-circle-o' : 'fa-circle-o')}></i>
+    {text}
+    <RemoveButton value={id} />
+  </li>
+)
+
+/* <TodoList /> ********************/
+const TodoList = ({
+  todos, onTodoClick
+}) => {
+  return (
+    <ReactCSSTransitionGroup
+      id="TodoList"
+      component="ul"
+      transitionName="todo"
+      transitionEnterTimeout={500}
+      transitionLeaveTimeout={500}
+      >
+      {todos.map(todo =>
+                 <Todo
+                   id={todo.id}
+                   key={todo.id}
+                   {...todo}
+                   onClick={() => onTodoClick(todo.id)}
+                   />
+                )}
+    </ReactCSSTransitionGroup>
+  )
+}
+
+/* <Link /> ************************/
+const Link = ({
+  active,
+  children, 
+  onClick
+}) => {
+  if (active) {
+    return <span>{children}</span>;
+  }
+  return (
+    <a href='#'
+      onClick={e => {
+        e.preventDefault();
+        onClick();
+      }}>
+      {children}
+    </a>
+  )
+}
+
+/* <Header /> **********************/
+const Header = () => (
+  <p id="Header">
+    <FilterLink
+      filter='SHOW_ALL'>
+      <i className="fa fa-list"></i>
+    </FilterLink>
+    <FilterLink 
+      filter='SHOW_ACTIVE'>
+      <i className="fa fa-circle-o"></i>
+    </FilterLink>
+    <FilterLink 
+      filter='SHOW_COMPLETED'>
+      <i className="fa fa-dot-circle-o"></i>
+    </FilterLink> 
+  </p>
+)
+
+/* <TodoApp /> *********************/
+const TodoApp = () => (
+  <div id="TodoApp">
+    <Header />
+    <VisibleTodoList />
+    <AddTodo />
+  </div>
+)
+
+/************************************
+* CONTAINER COMPONENTS
+************************************/
+
+/* <VisibleTodoList /> *************/
+
+// Function to ascertain which Todos should be shown.
+const getVisibleTodos = (todos, filter) => {
+  switch (filter) {
+    case 'SHOW_ALL':
+      return todos;
+    case 'SHOW_COMPLETED':
+      // Return a filtered array of items whose completed value = true
+      return todos.filter(t => t.completed);
+    case 'SHOW_ACTIVE':
+      // Return a filtered array of items whose completed value = false
+      return todos.filter(t => !t.completed);
+                }
+}
+// Gives <VisibleTodoList /> the state that it needs
+const mapStateToTodoListProps = (state) => ({
+  todos: getVisibleTodos(
+    // Current todos and visibilityFilter
+    state.todos,
+    state.visibilityFilter
+  )
+});
+// Gives <VisibleTodoList /> the props that it needs
+const mapDispatchToTodoListProps = (dispatch) => ({
+  onTodoClick: (id) => {
+    dispatch(toggleTodo(id));
+  }
+});
+// Creates <VisibleTodoList />
+const VisibleTodoList = connect(
+  mapStateToTodoListProps,
+  mapDispatchToTodoListProps
+)(TodoList);
+
+/* <FilterLink /> ******************/
+
+// Gives <FilterLink /> the state that it needs
+const mapStateToLinkProps = (state, ownProps) => ({
+  active: ownProps.filter === state.visibilityFilter
+})
+// Gives <FilterLink /> the props that it needs
+const mapDispatchToLinkProps = (
+  dispatch,
+  ownProps
+) => ({
+  onClick() {
+    dispatch(
+      setVisibilityFilter(ownProps.filter)
+    )
+  }
+})
+const FilterLink = connect(
+  mapStateToLinkProps,
+  mapDispatchToLinkProps
+)(Link);
+
+/************************************
+* OTHER COMPONENTS
+************************************/
+
+/* <AddTodo /> *********************/
+let AddTodo = ({ dispatch }) => {
+  let input;
+  return (
+    <form id="AddTodo" className="add-todo" onSubmit={(e) => {
+        e.preventDefault();
+        if (input.value.length > 0) {
+          dispatch(addTodo(input.value));
+          input.value = '';
+        }
+      }}>
+      <input type="text" ref={node => { input = node }} placeholder="Add a todo..." />
+      <button type="submit"><i className="fa fa-plus"></i></button>
+    </form>
+  )
+}
+// Connect() without any parameters creates a container that doesn't subscribe to the store, but will pass dispatch to the component that it wraps.
+AddTodo = connect()(AddTodo);
+
+let RemoveButton = ({value, dispatch}) => {
+  return (
+    <i className="fa fa-times"
+      onClick={() => {
+        dispatch(removeTodo(value));
+      }}>
+    </i>
+  )
+}
+RemoveButton = connect()(RemoveButton);
+
+
+/************************************
+* REACT RENDER
+************************************/
+
+const configureStore = () => {
+  const persistedState = loadState();
+  const store = createStore(todoApp, persistedState);
+
+  store.subscribe(_.throttle(() => {
+    saveState({
+      todos: store.getState().todos
+    });
+  }, 1000));
+
+  return store;
+}
+
+const Root = ({ store }) => (
+  <Provider store={store}>
+    <TodoApp />
+  </Provider>
+)
+
+const loadState = () => {
+  try {
+    const serializedState = localStorage.getItem('state');
+    if (serializedState === null) {
+      return undefined;
+    }
+    return JSON.parse(serializedState);
+  } catch (err) {
+    return undefined;
+  }
+};
+
+const saveState = (state) => {
+  try {
+    const serializedState = JSON.stringify(state);
+    localStorage.setItem('state', serializedState);
+  } catch (err) {
+    // Ignore errors.
+  }
+}
+
+const store = configureStore();
+
+ReactDOM.render(
+  <Root store={store} />,
+  document.getElementById('root')
+);
+

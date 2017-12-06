@@ -1,0 +1,243 @@
+$body-bg-color: #FFB623;
+$app-bg-color: #EF2155;
+$black: #333333;
+$white: #efefef;
+
+$box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+$box-shadow-hover: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+$transition: all 0.3s cubic-bezier(.25, .8, .25, 1);
+$text-shadow: 0px 1px 2px rgba(0, 0, 0, 0.75);
+$border-radius: 5px;
+
+
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Open Sans', sans-serif;
+}
+
+html, body {
+  height: 100%;
+  background: $body-bg-color;
+  color: $black;
+}
+
+::-webkit-scrollbar {
+  -webkit-appearance: none;
+  width: 7px;
+}
+::-webkit-scrollbar-thumb {
+  border-radius: 4px;
+  background-color: rgba(0,0,0,.5);
+  -webkit-box-shadow: 0 0 1px rgba(255,255,255,.5);
+}
+
+#TodoApp {
+  position: absolute;
+  margin: auto;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 350px;
+  height: 520px;
+  padding: 20px;
+  border-radius: $border-radius;
+  background: $app-bg-color;
+  box-shadow: $box-shadow-hover;
+  #Header {
+    text-align: center;
+    border-bottom: 3px solid darken($app-bg-color, 15%);
+    padding: 1em;
+    span {
+      opacity: 0.7;
+    }
+    a {
+      color: $black;
+      background: $white;
+      transition: $transition;
+      cursor: pointer;
+      &:hover {
+        box-shadow: $box-shadow-hover;
+      }
+    }
+    span, a {
+      width: 50px;
+      height: 50px;
+      display: inline-block;
+      line-height: 50px;
+      border-radius: $border-radius;
+      margin: 0 10px;
+      background: $white;
+      box-shadow: $box-shadow;
+    }
+  }
+  #TodoList {
+    height: 250px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    list-style: none;
+    border-bottom: 3px solid darken($app-bg-color, 15%);
+    
+    .todo {
+      background: $white;
+      padding: 10px;
+      margin: 10px 0;
+      box-shadow: $box-shadow;
+      transition: $transition;
+      cursor: pointer;
+      &:hover {
+        box-shadow: $box-shadow-hover;
+      }
+      &:after {
+        content: '';
+        position: relative;
+        width: 100%;
+        border-bottom: 5px solid $black;
+        height: 5px;
+      }
+      i {
+        margin-right: 10px;
+      }
+      .fa-times {
+        font-size: 1.5em;
+        position: absolute;
+        right: 0px;
+        transform: translate(0, -0.1em);
+        color: #e74c3c;
+        transition: $transition;
+      }
+      &-completed {
+        text-decoration: line-through;
+      }
+    }
+    .todo-enter {
+      transform: translateX(-100%);
+      transition: all 750ms cubic-bezier(.87,-.41,.19,1.44);
+    }
+
+    .todo-enter.todo-enter-active {
+      transform: translateX(0);
+    }
+
+    .todo-leave {
+      transform: translateX(0%);
+      transition: all 750ms cubic-bezier(.87,-.41,.19,1.44);
+    }
+    .todo-leave.todo-leave-active {
+      transform: translateX(100%);
+    }
+  }
+  #AddTodo {
+    text-align: center;
+    margin-top: 1em;
+    input {
+      display: block;
+      border: 0;
+      background: $white;
+      font-size: 1.2em;
+      padding: 0.5em;
+      width: 100%;
+      box-shadow: $box-shadow;
+      transition: $transition;
+      &:hover {
+        box-shadow: $box-shadow-hover;
+      }
+    }
+    button {
+      background: #1ABC9C;
+      box-shadow: $box-shadow;
+      color: white;
+      border: none;
+      border-radius: $border-radius;
+      width: 70px;
+      height: 70px;
+      font-size: 35px;
+      margin: 20px 0;
+      transition: $transition;
+      cursor: pointer;
+      text-shadow: $text-shadow;
+      &:hover {
+        box-shadow: $box-shadow-hover;
+      }
+    }
+  }
+}
+
+::-webkit-scrollbar {
+  -webkit-appearance: none;
+  width: 7px;
+}
+::-webkit-scrollbar-thumb {
+  border-radius: 4px;
+  background-color: rgba(0,0,0,.5);
+  -webkit-box-shadow: 0 0 1px rgba(255,255,255,.5);
+}
+
+.todo {
+  line-height: 1.5;
+  position: relative;
+  padding: 0 2.5rem 0 .75rem;
+  transition: transform 0.5s cubic-bezier(.55, 0, .1, 1);
+  &:after {
+    font-family: FontAwesome;
+    content: "\f00c";
+    position: absolute;
+    right: .75rem;
+    color: #2ecc71;
+    opacity: 0;
+    transform: scale(0);
+    transition: transform, opacity, 0.25s cubic-bezier(.55, 0, .1, 1);
+  }
+  & + .todo {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    &:before {
+      content: '';
+      background: #e8ebed;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      border-radius: 2px;
+    }
+  }
+  &__content {
+    position: relative;
+    opacity: 1;
+    text-transform: capitalize;
+    cursor: pointer;
+    transition: opacity 0.25s ease-out;
+    &:after {
+      content: '';
+      position: absolute;
+      display: block;
+      width: calc( 100% + .5em );
+      left: -.25em;
+      height: 2px;
+      top: 50%;
+      border-radius: 1px;
+      background: #2E2E2E;
+      transform-origin: center right;
+      transform: scaleX(0);
+      transition: transform 0.5s cubic-bezier(.55, 0, .1, 1);
+    }
+  }
+  &.todo--completed {
+    &:after {
+      opacity: 1;
+      transform: scale(1);
+    }
+    .todo__content {
+      opacity: 0.5;
+      &:after {
+        transform: scaleX(1);
+        transform-origin: center left;
+      }
+    }
+  }
+}
+
